@@ -4,6 +4,7 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 import { useRoute } from '@react-navigation/native';
 import Home from './Home';
 import Patterns from './Patterns';
+import Welcome from './Welcome';
 
 const Tab = createBottomTabNavigator();
 
@@ -12,7 +13,7 @@ function Nav() {
 
   return (
     <Tab.Navigator
-      initialRouteName='Home'
+      initialRouteName='Welcome'
       screenOptions={{
         headerShown: false,
         tabBarStyle: {

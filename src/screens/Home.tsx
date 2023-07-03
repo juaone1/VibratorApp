@@ -14,32 +14,52 @@ import { Neomorph } from 'react-native-neomorph-shadows';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import DropDownPicker from 'react-native-dropdown-picker';
 import { useFocusEffect } from '@react-navigation/native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 type RootStackParamList = {
   Patterns: undefined;
-  EditPatterns: undefined;
 };
 
-type HomeProps = {
+type PatternsProps = {
   navigation: StackNavigationProp<RootStackParamList, 'Patterns'>;
-
 };
 
-// type PatternsProps = {
-//   navigation: StackNavigationProp<RootStackParamList, 'Patterns'>;
-// };
-
-function Home({ navigation}: HomeProps) {
+function Home({ navigation }: PatternsProps) {
   const [pattern, setPattern] = useState<number[]>([]);
   const [activeButton, setActiveButton] = useState('');
   const [neomorphInner, setNeomorphInner] = useState(false);
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState<null | number>(null);
   const [isVibrating, setIsVibrating] = useState(false);
-  const [savedPatternNames, setSavedPatternNames] = useState<string[]>([]);
-  const [allItems, setAllItems] = useState<{ label: string; value: number }[]>([]);
-  const [createdPatterns, setCreatedPatterns] = useState<{ name: string; pattern: number[] }[]>([]);
+  const [items, setItems] = useState([
+    { label: 'Slow Pattern 1', value: 0 },
+    { label: 'Slow Pattern 2', value: 1 },
+    { label: 'Slow Pattern 3', value: 2 },
+    { label: 'Medium Pattern 1', value: 3 },
+    { label: 'Medium Pattern 2', value: 4 },
+    { label: 'Medium Pattern 3', value: 5 },
+    { label: 'Fast Pattern 1', value: 6 },
+    { label: 'Fast Pattern 2', value: 7 },
+    { label: 'Fast Pattern 2', value: 8 },
+    // Add more patterns here...
+  ]);
+  const resetState = () => {
+    setPattern([]);
+    setActiveButton('');
+    setNeomorphInner(false);
+    setOpen(false);
+    setValue(null);
+    setIsVibrating(false);
+    Vibration.cancel();
+   
+    // Add any other state variables that need to be reset here
+  };
+
+  useFocusEffect(
+    React.useCallback(() => {
+      resetState();
+    }, [])
+  );
+
 
   const patternLookup: Record<string, number[][]> = {
     slow: [
@@ -61,185 +81,41 @@ function Home({ navigation}: HomeProps) {
       // Add more fast patterns here...
     ],
   };
-
-  const loadPatternFromStorage = async () => {
-    try {
-      const savedPatternsString = await AsyncStorage.getItem('vibrationPatterns');
-      if (savedPatternsString) {
-        const savedPatterns: { [key: string]: number[] } = JSON.parse(savedPatternsString);
-        console.log("Saved Patterns:", savedPatterns);
-
-  
-        // Extract the pattern names (keys) from the 'savedPatterns' object
-        const patternNames = Object.keys(savedPatterns);
-        const createdPatternsArray = patternNames.map((patternName) => ({
-          name: patternName,
-          pattern: savedPatterns[patternName],
-        }));
-
-        setCreatedPatterns(createdPatternsArray);
-        console.log(patternNames);
-  
-        // Update the state with the pattern names
-        setSavedPatternNames(patternNames);
-
-        // for (const patternName of patternNames) {
-        //   patternLookup[patternName.toLowerCase()] = [savedPatterns[patternName]];
-        // }
-        console.log(savedPatterns , "savedPatterns");
-      }
-    } catch (error) {
-      console.error('Error loading pattern from storage:', error);
-    }
-  };
-
-  useFocusEffect(
-    React.useCallback(() => {
-      // Code to update the 'items' state with the new patterns here
-      // For example, you can call a function to load the patterns from storage and update the state.
-      loadPatternFromStorage();
-    }, [])
-  );
-
-  
-
-  const [items, setItems] = useState([
-    { label: 'Slow Pattern 1', value: 0 },
-    { label: 'Slow Pattern 2', value: 1 },
-    { label: 'Slow Pattern 3', value: 2 },
-    { label: 'Medium Pattern 1', value: 3 },
-    { label: 'Medium Pattern 2', value: 4 },
-    { label: 'Medium Pattern 3', value: 5 },
-    { label: 'Fast Pattern 1', value: 6 },
-    { label: 'Fast Pattern 2', value: 7 },
-    { label: 'Fast Pattern 3', value: 8 },
-    
-    // Add more patterns here...
-  ]);
-  
-  useEffect(() => {
-    const patternItems = savedPatternNames.map((patternName, index) => ({
-      label: patternName,
-      value: index + 9,
-    }));
-
-    // Add the initial items to the patternItems array
-    const allItems = [
-      { label: 'Slow Pattern 1', value: 0 },
-      { label: 'Slow Pattern 2', value: 1 },
-      { label: 'Slow Pattern 3', value: 2 },
-      { label: 'Medium Pattern 1', value: 3 },
-      { label: 'Medium Pattern 2', value: 4 },
-      { label: 'Medium Pattern 3', value: 5 },
-      { label: 'Fast Pattern 1', value: 6 },
-      { label: 'Fast Pattern 2', value: 7 },
-      { label: 'Fast Pattern 3', value: 8 },
-      ...patternItems, // Spread the patternItems array here
-    ];
-    
-    setItems(allItems);
-    setAllItems(allItems); //
-  }, [savedPatternNames]);
-
-  const resetState = () => {
-    setPattern([]);
-    setActiveButton('');
-    setNeomorphInner(false);
-    setOpen(false);
-    setValue(null);
-    setIsVibrating(false);
-    Vibration.cancel();
-    setItems(allItems);
-   
-    // Add any other state variables that need to be reset here
-  };
-
-  useFocusEffect(
-    React.useCallback(() => {
-      resetState();
-    }, [])
-  );
-
-
   const handleStartButtonPress = () => {
     if (value !== null) {
-      console.log(value, "value");
       const selectedItem = items.find(item => item.value === value);
-      console.log(selectedItem, "selectedItem");
       if (selectedItem) {
-
-        if (selectedItem.value < 9) {
-          const speed = selectedItem.label.split(' ')[0].toLowerCase();
-          console.log(speed, "value1");
-          const patternIndex = selectedItem.value % 3;
-          console.log(patternIndex, "patternIndex1"); // Assuming each speed has only two patterns
-          const selectedPattern = patternLookup[speed][patternIndex];
-          console.log(selectedPattern, "selectedPattern1")
-
-          if (isVibrating) {
-            Vibration.cancel();
-          } else {
-            Vibration.vibrate(selectedPattern, true);
-          }
-    
-
+        const speed = selectedItem.label.split(' ')[0].toLowerCase();
+        const patternIndex = selectedItem.value % 2; // Assuming each speed has only two patterns
+        const selectedPattern = patternLookup[speed][patternIndex];
+  
+        if (isVibrating) {
+          Vibration.cancel();
+        } else {
+          Vibration.vibrate(selectedPattern, true);
         }
-        else {
-          const patternIndex = selectedItem.value - 9;
-          console.log(patternIndex, "patternIndex"); // Assuming each speed has only two patterns
-          const selectedPattern = createdPatterns[patternIndex].pattern;
-          console.log(selectedPattern, "selectedPattern")
-
-          if (isVibrating) {
-            Vibration.cancel();
-          } else {
-            Vibration.vibrate(selectedPattern, true);
-          }
-        }  
+  
         setIsVibrating((prev) => !prev);
         setNeomorphInner((prev) => !prev);
       }
     }
   };
 
-  const resetDropdownPicker = () => {
-    setOpen(false);
-    setValue(null);
-    setItems(allItems);
-    // Add any other state variables related to the dropdown picker that need to be reset here
-  };
-
   const handlePatternButtonPress = (speed: string, patterns: number[][]) => {
-    if (isButtonActive(speed)) {
-      // If the button is already active, deactivate it and reset the dropdown picker
-      setActiveButton('');
-      resetDropdownPicker();
-    } else {
-      // If the button is not active, activate it and set the patterns in the dropdown picker
-      const patternItems = patterns.map((_, index) => ({
-        label: `${speed} Pattern ${index + 1}`,
-        value: index,
-      }));
-      setItems(patternItems);
-      setActiveButton(speed);
-    }
+    const patternItems = patterns.map((_, index) => ({
+      label: `${speed} Pattern ${index + 1}`,
+      value: index,
+    }));
+    setItems(patternItems);
+    setActiveButton(speed);
   };
-
   const handleSetNewPatternButtonPress = () => {
     navigation.navigate('Patterns');
   };
 
-  // const handleEditPatternButtonPress = () => {
-  //   navigation.navigate('EditPatterns');
-  // };
-
-  
-
   const isButtonActive = (button: string) => {
     return activeButton === button;
   };
-
-  
 
   const { width } = Dimensions.get('window');
   const setPatternButtonWidth = width * 0.8;
@@ -308,7 +184,6 @@ function Home({ navigation}: HomeProps) {
       </View>
       <View style={styles.container}>
         <View style={styles.neumorphicButtonContainer}>
-
           <DropDownPicker
             style={[styles.picker, { width: setPatternButtonWidth }]}
             open={open}
@@ -318,15 +193,7 @@ function Home({ navigation}: HomeProps) {
             setValue={setValue}
             setItems={setItems}
             dropDownContainerStyle={{
-              width: setPatternButtonWidth,
-              justifyContent: 'center',
-              alignSelf: 'center',
-              borderRadius: 30,
-              paddingLeft: 20,
-              borderColor: 'white'
-            }}
-            listItemContainerStyle = {{
-              width: setPatternButtonWidth
+              // width: setPatternButtonWidth,
             }}
           />
           <Neomorph
@@ -351,13 +218,6 @@ function Home({ navigation}: HomeProps) {
           >
             <Text style={styles.setPatternButtonText}>Set New Pattern</Text>
           </TouchableOpacity>
-
-          {/* <TouchableOpacity
-            style={[styles.editPatternButton, { width: setPatternButtonWidth }]}
-            onPress={handleEditPatternButtonPress}
-          >
-            <Text style={styles.setPatternButtonText}>Edit Pattern</Text>
-          </TouchableOpacity> */}
         </View>
       </View>
     </SafeAreaView>
@@ -426,7 +286,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 80
   },
   neumorphicButton: {
     shadowRadius: 10,
@@ -446,15 +305,6 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     marginTop: 70, // Adjust the margin top value here
   },
-
-  editPatternButton: {
-    backgroundColor: '#FF8989',
-    padding: 10,
-    borderRadius: 30,
-    alignSelf: 'center',
-    marginTop: 10, // Adjust the margin top value here
-  },
-
   setPatternButtonText: {
     color: 'white',
     fontSize: 18,
